@@ -10,6 +10,9 @@ tempFile=$scriptPath/tmp/temp.csv
 # Merge file path
 mergeFile=$scriptPath/tmp/merge.csv
 
+# Add file path
+addFile=$scriptPath/tmp/add.csv
+
 # Final file path
 finalFile=$scriptPath/tmp/final.csv
 
@@ -48,8 +51,8 @@ echo "+----------------------------------+-------+"
 echo "|             Vendor               |  ID   |"
 echo "+----------------------------------+--------"
 echo "| HLC (Hawley-Lambert Cycles)      |   1   |"
-echo "| LTP (Live To Play Sports)        |   2   |"
-echo "| OGC (Outdoor Gear Canada)        |   3   |"
+# echo "| LTP (Live To Play Sports)        |   2   |"
+# echo "| OGC (Outdoor Gear Canada)        |   3   |"
 echo "+----------------------------------+-------+"
 echo
 
@@ -114,32 +117,58 @@ case $vendorId in
     echo "$(csvcut -C "Dealer Bar Code" $tempFile)" > $tempFile
     echo "   Dealer Bar Code   -->   <REMOVED>"
 
+
     # Begin final output file
     cp $lsTemplate $mergeFile
 
+    # Get rows to loop over using Custom SKU as unique identifier
+    IFS=$'\n'
+    customSkus=( $(csvcut -c 'Custom SKU' $tempFile) )
+    msrpPrices=( $(csvcut -c 'MSRP - Price' $tempFile) )
+
+    # Add additional headers to a file that we'll merge later
+    echo "Custom SKU,Vendor,Default - Price,Online - Price" > $addFile
+
+    # Loop for rows, ommitting first row containing header
+    for s in "${!customSkus[@]}"; do
+      # Trim dollar signs and whitespace from msrp prices
+      m=$(echo "${msrpPrices[$s]/$/}" | xargs)
+
+      # add row values
+      echo "${customSkus[$s]},HLC,$m,$m" >> $addFile
+    done
+
+    # Merge temp file into add file
+    echo "$(csvjoin -c 'Custom SKU' $tempFile $addFile)" > $tempFile
+
     # Remove duplicate fields
-    echo "$(csvcut -C 'Custom SKU,Description,Shop Quantity on Hand,Default Cost,MSRP - Price,UPC,EAN' $mergeFile)" > $mergeFile
+    echo "$(csvcut -C \
+      'Custom SKU,Description,Shop Quantity on Hand,Default Cost,MSRP - Price,UPC,EAN,Vendor,Default - Price,Online - Price' \
+      $mergeFile)" > $mergeFile
 
     # Join temp file with merge file
     echo "$(csvjoin $tempFile $mergeFile)" > $finalFile
 
     # Copy converted file to home directory
     mkdir -p ~/Lightspeed\ CSV
-    fileDate=$(date '+%Y-%m-%d_%H:%M:%S')
+    fileDate=$(date '+%Y%m%d_%H%M%S')
 
     cp $finalFile ~/Lightspeed\ CSV/ls_import_hlc_$fileDate.csv
 
     echo "Output File: ~/Lightspeed\ CSV/ls_import_hlc_$fileDate.csv"
 
+    # Clean up tmp/ directory
+    rm $scriptPath/tmp/*.*
+
     echo "..done"
 
     ;;
-  2) ######## LTP ###########
-    echo "Support for LTP coming soon!"
-    ;;
-  3) ######## OGC ###########
-    echo "Support for OGC coming soon!"
-    ;;
+  # 2) ######## LTP ###########
+  #   echo "Support for LTP coming soon!"
+  #   ;;
+  # 3) ######## OGC ###########
+  #   echo "Support for OGC coming soon!"
+  #   ;;
 
   esac
 
