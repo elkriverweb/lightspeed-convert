@@ -78,6 +78,7 @@ case $vendorId in
     # Get number of columns in template file
     templateCols=$(head -1 $lsTemplate | sed 's/[^,]//g'| wc -c)
 
+    echo
     echo "+--------------------------+--------------------------+"
     echo "|       Import Field      -->    Lightspeed Field     |"
     echo "+--------------------------+--------------------------+"
@@ -85,38 +86,37 @@ case $vendorId in
 
     # For each header in import file, replace with corresponding Lightspeed inventory field
     sed -i -e "1 s/Item #/Custom SKU/" $tempFile
-    echo "   Item #   -->   Custom SKU"
+    echo "                Item #    -->    Custom SKU"
 
-    echo "   Description   -->   Description"
+    echo "           Description    -->    Description"
 
     sed -i -e "1 s/Qty/Shop Quantity on Hand/" $tempFile
-    echo "   Qty   -->   Shop Quantity on Hand"
+    echo "                   Qty    -->    Shop Quantity on Hand"
 
     echo "$(csvcut -C "U/M" $tempFile)" > $tempFile
-    echo "   U/M   -->   <REMOVED>"
+    echo "                   U/M    -->    -- REMOVED --"
 
     echo "$(csvcut -C "Regular Price" $tempFile)" > $tempFile
-    echo "   Regular Price   -->   <REMOVED>"
+    echo "         Regular Price    -->    -- REMOVED --"
 
     sed -i -e "1 s/Net Price/Default Cost/" $tempFile
-    echo "   Net Price   -->   Default Cost"
+    echo "             Net Price    -->    Default Cost"
 
     echo "$(csvcut -C "Net Amount" $tempFile)" > $tempFile
-    echo "   Net Amount   -->   <REMOVED>"
+    echo "            Net Amount    -->    -- REMOVED --"
 
     echo "$(csvcut -C "Label Price" $tempFile)" > $tempFile
-    echo "   Label Price   -->   <REMOVED>"
+    echo "           Label Price    -->    -- REMOVED --"
 
     sed -i -e "1 s/MSRP/MSRP - Price/" $tempFile
-    echo "   MSRP   -->   MSRP - Price"
+    echo "                  MSRP    -->    MSRP - Price"
 
-    echo "   UPC   -->   UPC"
+    echo "                   UPC    -->    UPC"
 
-    echo "   EAN   -->   EAN"
+    echo "                   EAN    -->    EAN"
 
     echo "$(csvcut -C "Dealer Bar Code" $tempFile)" > $tempFile
-    echo "   Dealer Bar Code   -->   <REMOVED>"
-
+    echo "       Dealer Bar Code    -->    -- REMOVED --"
 
     # Begin final output file
     cp $lsTemplate $mergeFile
@@ -138,6 +138,11 @@ case $vendorId in
       echo "${customSkus[$s]},HLC,$m,$m" >> $addFile
     done
 
+    # Echo results
+    echo "           -- ADDED --    -->    Vendor"
+    echo "           -- ADDED --    -->    Default - Price"
+    echo "           -- ADDED --    -->    Online - Price"
+
     # Merge temp file into add file
     echo "$(csvjoin -c 'Custom SKU' $tempFile $addFile)" > $tempFile
 
@@ -150,17 +155,19 @@ case $vendorId in
     echo "$(csvjoin $tempFile $mergeFile)" > $finalFile
 
     # Copy converted file to home directory
-    mkdir -p ~/Lightspeed\ CSV
+    mkdir -p $HOME/Lightspeed/hlc
     fileDate=$(date '+%Y%m%d_%H%M%S')
 
-    cp $finalFile ~/Lightspeed\ CSV/ls_import_hlc_$fileDate.csv
-
-    echo "Output File: ~/Lightspeed\ CSV/ls_import_hlc_$fileDate.csv"
+    cp $finalFile $HOME/Lightspeed/hlc/ls_import_hlc_$fileDate.csv
 
     # Clean up tmp/ directory
     rm $scriptPath/tmp/*.*
 
+    echo
     echo "..done"
+    echo
+    echo "Output File: $HOME/Lightspeed/hlc/ls_import_hlc_$fileDate.csv"
+    echo
 
     ;;
   # 2) ######## LTP ###########
