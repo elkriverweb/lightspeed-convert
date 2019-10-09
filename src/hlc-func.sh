@@ -96,7 +96,7 @@ function convert {
   echo "           -- ADDED --    -->    Online - Price"
 
   # Merge temp file into add file
-  echo "$(csvjoin -c 'Custom SKU' $tempFile $addFile)" > $tempFile
+  echo "$(csvjoin -c 'Custom SKU' --no-inference $tempFile $addFile)" > $tempFile
 
   # Remove duplicate fields
   echo "$(csvcut -C \
@@ -104,21 +104,18 @@ function convert {
     $mergeFile)" > $mergeFile
 
   # Join temp file with merge file
-  echo "$(csvjoin $tempFile $mergeFile)" > $finalFile
+  echo "$(csvjoin --no-inference $tempFile $mergeFile)" > $finalFile
 
   # Copy converted file to home directory
-  mkdir -p $HOME/Lightspeed/hlc
+  mkdir -p $HOME/Lightspeed/HLC
   fileDate=$(date '+%Y%m%d_%H%M%S')
 
-  cp $finalFile $HOME/Lightspeed/hlc/ls_import_hlc_$fileDate.csv
-
-  # Clean up tmp/ directory
-  rm $scriptPath/tmp/*.*
+  cp $finalFile $HOME/Lightspeed/HLC/ls_import_hlc_$fileDate.csv
 
   echo
   echo "..done"
   echo
-  echo "Output File: $HOME/Lightspeed/hlc/ls_import_hlc_$fileDate.csv"
+  echo "Output File: $HOME/Lightspeed/HLC/ls_import_hlc_$fileDate.csv"
   echo
 
 }

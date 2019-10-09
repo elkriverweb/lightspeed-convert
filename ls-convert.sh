@@ -35,8 +35,8 @@ fi
 
 inputFile="$1"
 
-# Clean tmpp/ folder
-rm $scriptPath/tmp/*.*
+# Clean tmp/ folder
+rm $scriptPath/tmp/*
 
 # Check in put file exists and is in the correct format
 if [ ! -f "$inputFile" ]; then
@@ -56,6 +56,7 @@ echo "+----------------------------------+--------"
 echo "| HLC (Hawley-Lambert Cycles)      |   1   |"
 # echo "| LTP (Live To Play Sports)        |   2   |"
 # echo "| OGC (Outdoor Gear Canada)        |   3   |"
+echo "| O.R. (Outdoor Research Canada)   |   4   |"
 echo "+----------------------------------+-------+"
 echo
 
@@ -70,13 +71,22 @@ case $vendorId in
 
     ;;
   # 2) ######## LTP ###########
-  #   echo "Support for LTP coming soon!"
-  #   ;;
+    #   echo "Support for LTP coming soon!"
+    #   ;;
   # 3) ######## OGC ###########
-  #   echo "Support for OGC coming soon!"
-  #   ;;
+    #   echo "Support for OGC coming soon!"
+    #   ;;
+  4) ######## O.R. ##########
+
+    source $scriptPath/src/orc-func.sh
+    convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
+
+    ;;
 
   esac
+
+  # Clean up tmp/ directory
+  # rm $scriptPath/tmp/*
 
 
 
