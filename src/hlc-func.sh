@@ -45,20 +45,8 @@ function convert {
   sed -i -e "1 s/Qty/Shop Quantity on Hand/" $tempFile
   echo "                   Qty    -->    Shop Quantity on Hand"
 
-  echo "$(csvcut -C "U/M" $tempFile)" > $tempFile
-  echo "                   U/M    -->    -- REMOVED --"
-
-  echo "$(csvcut -C "Regular Price" $tempFile)" > $tempFile
-  echo "         Regular Price    -->    -- REMOVED --"
-
   sed -i -e "1 s/Net Price/Default Cost/" $tempFile
   echo "             Net Price    -->    Default Cost"
-
-  echo "$(csvcut -C "Net Amount" $tempFile)" > $tempFile
-  echo "            Net Amount    -->    -- REMOVED --"
-
-  echo "$(csvcut -C "Label Price" $tempFile)" > $tempFile
-  echo "           Label Price    -->    -- REMOVED --"
 
   sed -i -e "1 s/MSRP/MSRP - Price/" $tempFile
   echo "                  MSRP    -->    MSRP - Price"
@@ -66,6 +54,19 @@ function convert {
   echo "                   UPC    -->    UPC"
 
   echo "                   EAN    -->    EAN"
+
+  # Remove invalid columns
+  echo "$(csvcut -C "Net Amount" $tempFile)" > $tempFile
+  echo "            Net Amount    -->    -- REMOVED --"
+
+  echo "$(csvcut -C "Label Price" $tempFile)" > $tempFile
+  echo "           Label Price    -->    -- REMOVED --"
+
+  echo "$(csvcut -C "U/M" $tempFile)" > $tempFile
+  echo "                   U/M    -->    -- REMOVED --"
+
+  echo "$(csvcut -C "Regular Price" $tempFile)" > $tempFile
+  echo "         Regular Price    -->    -- REMOVED --"
 
   echo "$(csvcut -C "Dealer Bar Code" $tempFile)" > $tempFile
   echo "       Dealer Bar Code    -->    -- REMOVED --"
@@ -77,17 +78,26 @@ function convert {
   IFS=$'\n'
   customSkus=( $(csvcut -c 'Custom SKU' $tempFile) )
   msrpPrices=( $(csvcut -c 'MSRP - Price' $tempFile) )
+  defaultCosts=( $(csvcut -c 'Default Cost' $tempFile) )
+
+  # Drop MSRP - Prices and replace with dollar sign removed
+  echo "$(csvcut -C "MSRP - Price" $tempFile)" > $tempFile
+
+  # Drop Default Cost and replace with dollar sign removed
+  echo "$(csvcut -C "Default Cost" $tempFile)" > $tempFile
 
   # Add additional headers to a file that we'll merge later
-  echo "Custom SKU,Vendor,Default - Price,Online - Price" > $addFile
+  echo "Custom SKU,Vendor,Default Cost,Default - Price,MSRP - Price,Online - Price" > $addFile
 
   # Loop for rows, ommitting first row containing header
   for s in "${!customSkus[@]}"; do
+
     # Trim dollar signs and whitespace from msrp prices
     m=$(echo "${msrpPrices[$s]/$/}" | xargs)
+    c=$(echo "${defaultCosts[$s]/$/}" | xargs)
 
     # add row values
-    echo "${customSkus[$s]},HLC,$m,$m" >> $addFile
+    echo "${customSkus[$s]},HLC,$c,$m,$m,$m" >> $addFile
   done
 
   # Echo results
