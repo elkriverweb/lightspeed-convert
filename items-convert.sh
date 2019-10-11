@@ -23,7 +23,7 @@ addFile=$scriptPath/tmp/add.csv
 finalFile=$scriptPath/tmp/final.csv
 
 # Get path to Lightspeed template file
-lsTemplate=$scriptPath/src/lightspeed-item-import-template.csv
+lsTemplate=$scriptPath/src/templates/lightspeed-items-import-template.csv
 
 # Check for correct number of arguments. We are looking for one argument,
 # which should be the path to the CSV file we want to convert.
@@ -78,9 +78,14 @@ case $vendorId in
     convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
 
     ;;
-  # 2) ######## LTP ###########
-    #   echo "Support for LTP coming soon!"
-    #   ;;
+  2) ######## LTP ###########
+
+    outputFilePath="$outputPath/Item Imports/Live to Play"
+    outputFileName="ltp-items-import"
+    source $scriptPath/src/convert-ltp-items.sh
+    convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
+
+      ;;
   # 3) ######## OGC ###########
     #   echo "Support for OGC coming soon!"
     #   ;;

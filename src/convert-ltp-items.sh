@@ -13,7 +13,8 @@ function convert {
   addFile=$6
   finalFile=$7
 
-  echo "Converting HLC file to compatible Lightspeed Retail import file..."
+  priceTableName="ltp-2020-master-pos"
+  pricelistPath="$scriptPath/src/pricelists/ltp-2020-master-pos.csv"
 
   # Get first line of import file
   read -r inputHeader < $inputFile
@@ -32,44 +33,58 @@ function convert {
 
   echo
   echo "+--------------------------+--------------------------+"
-  echo "|       Import Field      -->    Lightspeed Field     |"
+  echo "|       Input Field       -->     Output Field        |"
   echo "+--------------------------+--------------------------+"
   echo
 
   # For each header in import file, replace with corresponding Lightspeed inventory field
-  sed -i -e "1 s/Item #/Custom SKU/" $tempFile
-  echo "                Item #    -->    Custom SKU"
+  sed -i -e "1 s/item.no/Custom SKU/I" $tempFile
+  echo "                Item No.    -->    Custom SKU"
 
+  sed -i -e "1 s/description/Description/I" $tempFile
+  sed -i -e "1 s/item.description/Description/I" $tempFile
   echo "           Description    -->    Description"
 
-  sed -i -e "1 s/Qty/Shop Quantity on Hand/" $tempFile
-  echo "                   Qty    -->    Shop Quantity on Hand"
+  sed -i -e "1 s/qty.shipped/Shop Quantity on Hand/I" $tempFile
+  echo "           Qty Shipped    -->    Shop Quantity on Hand"
 
-  sed -i -e "1 s/Net Price/Default Cost/" $tempFile
-  echo "             Net Price    -->    Default Cost"
+  sed -i -e "1 s/net.price/Shop Unit Cost/I" $tempFile
+  echo "             Net Price    -->    Shop Unit Cost"
 
-  sed -i -e "1 s/MSRP/MSRP - Price/" $tempFile
-  echo "                  MSRP    -->    MSRP - Price"
+  sed -i -e "1 s/unit.price/Default Cost/I" $tempFile
+  echo "             Unit Price    -->    Default Cost"
 
+  sed -i -e "1 s/upc/UPC/I" $tempFile
   echo "                   UPC    -->    UPC"
 
-  echo "                   EAN    -->    EAN"
-
   # Remove invalid columns
-  echo "$(csvcut -C "Net Amount" $tempFile)" > $tempFile
-  echo "            Net Amount    -->    -- REMOVED --"
+  # sed -i -e "1 s/backorder.qty/BO/I" $tempFile
+  # sed -i -e "1 s/qty b\/o/BO/I" $tempFile
+  # echo "$(csvcut -C "BO" $tempFile)" > $tempFile
+  # echo "         Backorder Qty    -->    -- REMOVED --"
 
-  echo "$(csvcut -C "Label Price" $tempFile)" > $tempFile
-  echo "           Label Price    -->    -- REMOVED --"
+  # sed -i -e "1 s/qty.alloc/QA/I" $tempFile
+  # echo "$(csvcut -C "QA" $tempFile)" > $tempFile
 
-  echo "$(csvcut -C "U/M" $tempFile)" > $tempFile
-  echo "                   U/M    -->    -- REMOVED --"
+  # sed -i -e "1 s/qty.on.pps/QOP/I" $tempFile
+  # echo "$(csvcut -C "QOP" $tempFile)" > $tempFile
+  # echo "         Qty Allocated    -->    -- REMOVED --"
 
-  echo "$(csvcut -C "Regular Price" $tempFile)" > $tempFile
-  echo "         Regular Price    -->    -- REMOVED --"
+  # sed -i -e "1 s/per/Per/I" $tempFile
+  # echo "$(csvcut -C "Per" $tempFile)" > $tempFile
+  # echo "                   Per    -->    -- REMOVED --"
 
-  echo "$(csvcut -C "Dealer Bar Code" $tempFile)" > $tempFile
-  echo "       Dealer Bar Code    -->    -- REMOVED --"
+  # sed -i -e "1 s/..saved/Saved/I" $tempFile
+  # echo "$(csvcut -C "Saved" $tempFile)" > $tempFile
+  # echo "                 Saved    -->    -- REMOVED --"
+
+  # sed -i -e "1 s/disc../Discount/I" $tempFile
+  # echo "$(csvcut -C "Discount" $tempFile)" $tempFile
+  # echo "              Discount    -->    -- REMOVED --"
+
+  # sed -i -e "1 s/net.amount/Net Amount/I" $tempFile
+  # echo "$(csvcut -C "Net Amount" $tempFile)" $tempFile
+  # echo "            Net Amount    -->    -- REMOVED--"
 
   # Begin final output file
   cp $lsTemplate $mergeFile
@@ -77,32 +92,28 @@ function convert {
   # Get rows to loop over using Custom SKU as unique identifier
   IFS=$'\n'
   customSkus=( $(csvcut -c 'Custom SKU' $tempFile) )
-  msrpPrices=( $(csvcut -c 'MSRP - Price' $tempFile) )
-  defaultCosts=( $(csvcut -c 'Default Cost' $tempFile) )
 
-  # Drop MSRP - Prices and replace with dollar sign removed
-  echo "$(csvcut -C "MSRP - Price" $tempFile)" > $tempFile
-
-  # Drop Default Cost and replace with dollar sign removed
-  echo "$(csvcut -C "Default Cost" $tempFile)" > $tempFile
 
   # Add additional headers to a file that we'll merge later
-  echo "Custom SKU,Vendor,Default Cost,Default - Price,MSRP - Price,Online - Price" > $addFile
+  echo "Custom SKU,Vendor,Default - Price,MSRP - Price,Online - Price" > $addFile
 
   # Loop for rows, ommitting first row containing header
+  echo "Updating data. This may take a long time..."
   for s in "${!customSkus[@]}"; do
 
-    # Trim dollar signs and whitespace from msrp prices
-    m=$(echo "${msrpPrices[$s]/$/}" | xargs)
-    c=$(echo "${defaultCosts[$s]/$/}" | xargs)
+    # Get MSRP from master price list
+    m=$(csvsql --query "SELECT [MSRP] FROM '$priceTableName' WHERE [Custom SKU] = '${customSkus[$s]}'" $pricelistPath | sed -n 2p)
+    printf '*'
 
     # add row values
-    echo "${customSkus[$s]},HLC,$c,$m,$m,$m" >> $addFile
+    echo "${customSkus[$s]},Live to Play Sports (Canada),$m,$m,$m" >> $addFile
   done
+  echo "...updates complete!"
 
   # Echo results
   echo "           -- ADDED --    -->    Vendor"
   echo "           -- ADDED --    -->    Default - Price"
+  echo "           -- ADDED --    -->    MSRP - Price"
   echo "           -- ADDED --    -->    Online - Price"
 
   # Merge temp file into add file
@@ -110,23 +121,11 @@ function convert {
 
   # Remove duplicate fields
   echo "$(csvcut -C \
-    'Custom SKU,Description,Shop Quantity on Hand,Default Cost,MSRP - Price,UPC,EAN,Vendor,Default - Price,Online - Price' \
+    'Custom SKU,Description,Shop Quantity on Hand,Shop Unit Cost,Default Cost,MSRP - Price,UPC,Vendor,Default - Price,Online - Price' \
     $mergeFile)" > $mergeFile
 
   # Join temp file with merge file
   echo "$(csvjoin --no-inference $tempFile $mergeFile)" > $finalFile
-
-  # Copy converted file to home directory
-  mkdir -p $HOME/Lightspeed/HLC
-  fileDate=$(date '+%Y%m%d_%H%M%S')
-
-  cp $finalFile $HOME/Lightspeed/HLC/ls_import_hlc_$fileDate.csv
-
-  echo
-  echo "..done"
-  echo
-  echo "Output File: $HOME/Lightspeed/HLC/ls_import_hlc_$fileDate.csv"
-  echo
 
 }
 

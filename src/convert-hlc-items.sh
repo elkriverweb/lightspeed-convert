@@ -30,7 +30,7 @@ function convert {
 
   echo
   echo "+--------------------------+--------------------------+"
-  echo "|       Import Field      -->    Lightspeed Field     |"
+  echo "|       Input Field       -->     Output Field        |"
   echo "+--------------------------+--------------------------+"
   echo
 
