@@ -4,6 +4,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # Return error and stop execution if variable is unset
 set -u
 
+# Set path to output file
+outputPath="$HOME/Lightspeed Imports"
+
 # Get script home path
 scriptPath="$( cd "$(dirname "$0")" ; pwd -P )"
 
@@ -54,7 +57,7 @@ echo "+----------------------------------+-------+"
 echo "|             Vendor               |  ID   |"
 echo "+----------------------------------+--------"
 echo "| HLC (Hawley-Lambert Cycles)      |   1   |"
-# echo "| LTP (Live To Play Sports)        |   2   |"
+echo "| LTP (Live To Play Sports)        |   2   |"
 # echo "| OGC (Outdoor Gear Canada)        |   3   |"
 echo "| O.R. (Outdoor Research Canada)   |   4   |"
 echo "+----------------------------------+-------+"
@@ -63,10 +66,15 @@ echo
 read -r -p "ID of import file vendor: " vendorId
 echo
 
+# Beginning conversion message
+echo "Converting file to compatible Lightspeed Retail import file..."
+
 case $vendorId in
   1) ######### HLC #########
 
-    source $scriptPath/src/hlc-func.sh
+    outputFilePath="$outputPath/Item Imports/HLC"
+    outputFileName="hlc-items-import"
+    source $scriptPath/src/convert-hlc-items.sh
     convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
 
     ;;
@@ -78,12 +86,27 @@ case $vendorId in
     #   ;;
   4) ######## O.R. ##########
 
-    source $scriptPath/src/orc-func.sh
+    outputFilePath="$outputPath/Item Imports/Outdoor Research"
+    outputFileName="or-itemes-import"
+    source $scriptPath/src/convert-or-items.sh
     convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
 
     ;;
 
   esac
+
+  # Copy converted file to home directory
+  mkdir -p $outputFilePath
+  fileDate=$(date '+%Y%m%d_%H%M%S')
+
+  cp $finalFile "$outputFilePath"/"$outputFileName"_"$fileDate.csv"
+
+  # Conversion completed message
+  echo
+  echo "..done"
+  echo
+  echo "Output File: $outputFilePath/$outputFileName"_"$fileDate.csv"
+  echo
 
   # Clean up tmp/ directory
   # rm $scriptPath/tmp/*

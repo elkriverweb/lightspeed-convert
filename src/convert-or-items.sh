@@ -13,8 +13,6 @@ function convert {
   addFile=$6
   finalFile=$7
 
-  echo "Converting OR file to compatible Lightspeed Retail import file..."
-
   # Get first line of import file
   read -r inputHeader < $inputFile
 
@@ -32,7 +30,7 @@ function convert {
 
   echo
   echo "+--------------------------+--------------------------+"
-  echo "|       Import Field      -->    Lightspeed Field     |"
+  echo "|       Input Field       -->     Output Field        |"
   echo "+--------------------------+--------------------------+"
   echo
 
@@ -118,7 +116,7 @@ function convert {
   msrpPrices=( $(csvcut -c 'MSRP - Price' $tempFile) )
 
   # Add additional headers to a file that we'll merge later
-  echo "Custom SKU,Matrix Attribute Set,Vendor,Default - Price,Online - Price" > $addFile
+  echo "Custom SKU,Matrix Attribute Set,Vendor,Default - Price,Online - Price, Category" > $addFile
 
   # Loop for rows, ommitting first row containing header
   for s in "${!customSkus[@]}"; do
@@ -145,18 +143,6 @@ function convert {
 
   # Join temp file with merge file
   echo "$(csvjoin --no-inference $tempFile $mergeFile)" > $finalFile
-
-  # Copy converted file to home directory
-  mkdir -p $HOME/Lightspeed/Outdoor\ Research\ Canada
-  fileDate=$(date '+%Y%m%d_%H%M%S')
-
-  cp $finalFile $HOME/Lightspeed/Outdoor\ Research\ Canada/ls_import_orc_$fileDate.csv
-
-  echo
-  echo "..done"
-  echo
-  echo "Output File: $HOME/Lightspeed/Outdoor\ Research\ Canada/ls_import_orc_$fileDate.csv"
-  echo
 
 }
 
