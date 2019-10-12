@@ -3,7 +3,7 @@ A bash script to convert vendor CSV files to a format compatible with Lightspeed
 
 ### Dependencies
 
-Bash, python >= v2.7, csvkit
+Bash, python >= v2.7, csvkit, sqlite3
 
 ##### Ubuntu
 ```bash

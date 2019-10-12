@@ -15,6 +15,8 @@ function convert {
 
   priceTableName="ltp-2020-master-pos"
   pricelistPath="$scriptPath/src/pricelists/ltp-2020-master-pos.csv"
+  pricelistTableName="ltp-pricelist"
+  pricelistDbPath="$scriptPath/tmp/$pricelistTableName.db"
 
   # Get first line of import file
   read -r inputHeader < $inputFile
@@ -99,15 +101,22 @@ function convert {
 
   # Loop for rows, ommitting first row containing header
   echo "Updating data. This may take a long time..."
+  echo
+
+  # Create sqlite3 database
+  csvsql --db "sqlite:///$pricelistDbPath" --table "$pricelistTableName" --insert "$pricelistPath"
+
   for s in "${!customSkus[@]}"; do
 
     # Get MSRP from master price list
-    m=$(csvsql --query "SELECT [MSRP] FROM '$priceTableName' WHERE [Custom SKU] = '${customSkus[$s]}'" $pricelistPath | sed -n 2p)
+    # m=$(csvsql --query "SELECT [MSRP] FROM '$priceTableName' WHERE [Custom SKU] = '${customSkus[$s]}'" $pricelistPath | sed -n 2p)
+    m=$(echo "SELECT MSRP FROM \"$pricelistTableName\" where \"Custom SKU\" = '${customSkus[$s]}'" | sqlite3 $pricelistDbPath)
     printf '*'
 
     # add row values
     echo "${customSkus[$s]},Live to Play Sports (Canada),$m,$m,$m" >> $addFile
   done
+  echo
   echo "...updates complete!"
 
   # Echo results
@@ -126,6 +135,9 @@ function convert {
 
   # Join temp file with merge file
   echo "$(csvjoin --no-inference $tempFile $mergeFile)" > $finalFile
+
+  # Clean up temporary files
+  rm $pricelistDbPath
 
 }
 

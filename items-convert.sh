@@ -114,7 +114,7 @@ case $vendorId in
   echo
 
   # Clean up tmp/ directory
-  # rm $scriptPath/tmp/*
+  rm $scriptPath/tmp/*
 
 
 
