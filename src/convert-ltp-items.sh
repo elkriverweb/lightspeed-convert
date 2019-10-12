@@ -41,7 +41,7 @@ function convert {
 
   # For each header in import file, replace with corresponding Lightspeed inventory field
   sed -i -e "1 s/item.no/Custom SKU/I" $tempFile
-  echo "                Item No.    -->    Custom SKU"
+  echo "              Item No.    -->    Custom SKU"
 
   sed -i -e "1 s/description/Description/I" $tempFile
   sed -i -e "1 s/item.description/Description/I" $tempFile
@@ -54,7 +54,7 @@ function convert {
   echo "             Net Price    -->    Shop Unit Cost"
 
   sed -i -e "1 s/unit.price/Default Cost/I" $tempFile
-  echo "             Unit Price    -->    Default Cost"
+  echo "            Unit Price    -->    Default Cost"
 
   sed -i -e "1 s/upc/UPC/I" $tempFile
   echo "                   UPC    -->    UPC"

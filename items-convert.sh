@@ -58,7 +58,7 @@ echo "|             Vendor               |  ID   |"
 echo "+----------------------------------+--------"
 echo "| HLC (Hawley-Lambert Cycles)      |   1   |"
 echo "| LTP (Live To Play Sports)        |   2   |"
-# echo "| OGC (Outdoor Gear Canada)        |   3   |"
+echo "| Shimano (Canada)                 |   3   |"
 echo "| O.R. (Outdoor Research Canada)   |   4   |"
 echo "+----------------------------------+-------+"
 echo
@@ -86,9 +86,14 @@ case $vendorId in
     convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
 
       ;;
-  # 3) ######## OGC ###########
-    #   echo "Support for OGC coming soon!"
-    #   ;;
+  3) ######## Shimano ###########
+
+    outputFilePath="$outputPath/Item Imports/Shimano"
+    outputFileName="shimano-items-import"
+    source $scriptPath/src/convert-shimano-items.sh
+    convert $scriptPath $inputFile $tempFile $lsTemplate $mergeFile $addFile $finalFile
+
+      ;;
   4) ######## O.R. ##########
 
     outputFilePath="$outputPath/Item Imports/Outdoor Research"
